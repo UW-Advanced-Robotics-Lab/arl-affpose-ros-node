@@ -1,4 +1,4 @@
-# DenseFusionROSNode
+# AffDenseFusionROSNode
 
 ## Requirements
    ```
