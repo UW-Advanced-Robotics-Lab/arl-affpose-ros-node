@@ -1,0 +1,110 @@
+<launch>
+  <arg name="rate" value="5" />
+  <!-- Object Meshes -->
+  <arg name="classes" default="$(find aff_densefusion_ros)/utils/object_meshes/classes.txt" />
+  <arg name="class_ids" default="$(find aff_densefusion_ros)/utils/object_meshes/classes_ids.txt" />
+
+  <!-- DenseFusion -->
+  <arg name="pose_model" default="$(find aff_densefusion_ros)/utils/trained_weights/densefusion/real/pose_model_12_0.012762044926652751.pth" />
+  <arg name="refine_model" default="$(find aff_densefusion_ros)/utils/trained_weights/densefusion/real/pose_refine_model_445_0.004616367177121292.pth" />
+
+  <arg name="num_points" default='500' />
+  <arg name="num_points_mesh" default='500' />
+  <arg name="iteration" default='2' />
+  <arg name="bs" default='1' />
+  <arg name="num_obj" default='1' />
+
+  <!-- AffNet -->
+  <arg name="affnet_model" default="$(find aff_densefusion_ros)/utils/trained_weights/affnet/real/BEST_MODEL_v1_20k_images.pth" />
+
+  <!-- ZED Camera -->
+  <arg name="rgb_image" default='/zed/zed_node/rgb/image_rect_color' />
+  <arg name="rgb_encoding" default='bgr8' />
+  <arg name="depth_image" default='/zed/zed_node/depth/depth_registered' />
+  <arg name="depth_encoding" default='16UC1' />
+
+  <arg name="cam_scale" default='1000' />
+
+  <!-- VGA -->
+<!--   <arg name="cam_width"  default='672' /> -->
+<!--   <arg name="cam_height" default='376' /> -->
+<!--   <arg name="crop_width"  default='384' /> -->
+<!--   <arg name="crop_height"  default='384' /> -->
+
+<!--   <arg name="cam_fx" default='339.113' /> -->
+<!--   <arg name="cam_fy" default='339.113' /> -->
+<!--   <arg name="cam_cx" default='343.066' /> -->
+<!--   <arg name="cam_cy" default='176.864' /> -->
+
+  <!-- HD 720  -->
+  <arg name="cam_width"  default='1280' />
+  <arg name="cam_height" default='720' />
+  <arg name="crop_width"  default='640' />
+  <arg name="crop_height"  default='640' />
+
+  <arg name="cam_cx" default='652.26074' />
+  <arg name="cam_cy" default='335.50336' />
+  <arg name="cam_fx" default='680.72644' />
+  <arg name="cam_fy" default='680.72644' />
+
+  <!-- Image Processing -->
+  <!-- the higher the value, the more sensitive the filter -->
+  <arg name="blur_threshold" value="50" />
+
+  <!-- Testing -->
+  <arg name="max_num_images" default="655"/>
+  <arg name="saved_image_path" default="$(find aff_densefusion_ros)/utils/images/"/>
+  <arg name="test_image_paths" default="/home/akeaveny/datasets/LabelFusion/arl_vicon_dataset/dataset_test/001_arl_lab_floor/images/"/>
+  <arg name="check_pose" default="False" />
+
+  <!-- RVIZ -->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find aff_densefusion_ros)/rviz/aff_densefusion_ros.rviz" />
+
+  <node pkg="aff_densefusion_ros" type="aff_densefusion_node.py" name="aff_densefusion_node" output="screen" cwd="node">
+    <param name="rate" value="$(arg rate)" />
+    <!-- Object Meshes -->
+    <param name="classes" value="$(arg classes)" />
+    <param name="class_ids" value="$(arg class_ids)" />
+
+    <!-- DenseFusion -->
+    <param name="pose_model" value="$(arg pose_model)" />
+    <param name="refine_model" value="$(arg refine_model)" />
+
+    <param name="num_points" value="$(arg num_points)" />
+    <param name="num_points_mesh" value="$(arg num_points_mesh)" />
+    <param name="iteration" value="$(arg iteration)" />
+    <param name="bs" value="$(arg bs)" />
+    <param name="num_obj" value="$(arg num_obj)" />
+
+    <!-- AffNet -->
+    <param name="affnet_model" value="$(arg affnet_model)" />
+
+    <!-- ZED Camera -->
+    <param name="rgb_image" value="$(arg rgb_image)" />
+    <param name="rgb_encoding" value="$(arg rgb_encoding)" />
+    <param name="depth_image" value="$(arg depth_image)" />
+    <param name="depth_encoding" value="$(arg depth_encoding)" />
+
+    <param name="cam_scale"  value="$(arg cam_scale)" />
+
+    <param name="cam_width"  value="$(arg cam_width)" />
+    <param name="cam_height" value="$(arg cam_height)" />
+    <param name="crop_width"   value="$(arg crop_width)" />
+    <param name="crop_height"  value="$(arg crop_height)" />
+
+    <param name="cam_fx" value="$(arg cam_fx)" />
+    <param name="cam_fy" value="$(arg cam_fy)" />
+    <param name="cam_cx" value="$(arg cam_cx)" />
+    <param name="cam_cy" value="$(arg cam_cy)" />
+
+    <!-- Image Processing -->
+    <param name="blur_threshold" value="$(arg blur_threshold)" />
+
+    <!-- Testing -->
+    <param name="max_num_images" value="$(arg max_num_images)" />
+    <param name="saved_image_path" value="$(arg saved_image_path)" />
+    <param name="test_image_paths" value="$(arg test_image_paths)" />
+    <param name="check_pose" value="$(arg check_pose)" />
+
+  </node>
+</launch>
