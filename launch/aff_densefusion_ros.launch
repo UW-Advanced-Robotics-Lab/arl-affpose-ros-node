@@ -25,8 +25,7 @@
 
   <arg name="cam_scale" default='1000' />
 
-  <!-- VGA -->
-<!--   <arg name="cam_width"  default='672' /> -->
+config.DEVICE<!--   <arg name="cam_width"  default='672' /> -->
 <!--   <arg name="cam_height" default='376' /> -->
 <!--   <arg name="crop_width"  default='384' /> -->
 <!--   <arg name="crop_height"  default='384' /> -->
@@ -39,8 +38,8 @@
   <!-- HD 720  -->
   <arg name="cam_width"  default='1280' />
   <arg name="cam_height" default='720' />
-  <arg name="crop_width"  default='640' />
-  <arg name="crop_height"  default='640' />
+  <arg name="crop_width"  default='480' />
+  <arg name="crop_height"  default='480' />
 
   <arg name="cam_cx" default='652.26074' />
   <arg name="cam_cy" default='335.50336' />

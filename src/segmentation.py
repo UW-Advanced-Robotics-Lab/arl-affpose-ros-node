@@ -90,42 +90,47 @@ class Detector(object):
             if 'aff_labels' in outputs.keys():
                 aff_labels = np.array(outputs['aff_labels'], dtype=np.int32)
 
-            idx = np.argmax(scores)
-            score = scores[idx]
-            bbox = boxes[idx]
-            label = labels[idx]
-            # print("scores:{}, bbox:{}, label:{}".format(score, bbox, label))
+            if len(scores) > 0:
 
-            #######################
-            ### bbox
-            #######################
-            bbox_img = helper_utils.draw_bbox_on_img(image=img,
-                                                     labels=labels,
-                                                     boxes=boxes,
-                                                     scores=scores)
+                idx = np.argmax(scores)
+                score = scores[idx]
+                bbox = boxes[idx]
+                label = labels[idx]
+                # print("scores:{}, bbox:{}, label:{}".format(score, bbox, label))
 
-            #######################
-            ### masks
-            #######################
-            mask = helper_utils.get_segmentation_masks(image=bbox_img,
-                                                       labels=labels,
-                                                       binary_masks=binary_masks,
-                                                       scores=scores)
+                #######################
+                ### bbox
+                #######################
+                bbox_img = helper_utils.draw_bbox_on_img(image=img,
+                                                         labels=labels,
+                                                         boxes=boxes,
+                                                         scores=scores)
 
-            pred_color_mask = vicon_dataset_utils.colorize_obj_mask(mask)
-            mask_color_img = cv2.addWeighted(bbox_img, 0.35, pred_color_mask, 0.65, 0)
+                #######################
+                ### masks
+                #######################
+                mask = helper_utils.get_segmentation_masks(image=bbox_img,
+                                                           labels=labels,
+                                                           binary_masks=binary_masks,
+                                                           scores=scores)
 
-            #####################
-            # MASKED RGB IMG
-            #####################
+                pred_color_mask = vicon_dataset_utils.colorize_obj_mask(mask)
+                mask_color_img = cv2.addWeighted(bbox_img, 0.35, pred_color_mask, 0.65, 0)
 
-            # cv2.imshow('bbox', cv2.cvtColor(bbox_img, cv2.COLOR_BGR2RGB))
-            # cv2.imshow('pred_color_mask', cv2.cvtColor(pred_color_mask, cv2.COLOR_BGR2RGB))
-            # cv2.imshow('mask_color_img', cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB))
-            # cv2.waitKey(0)
+                #####################
+                # MASKED RGB IMG
+                #####################
 
-            # return np.array(label), np.array(bbox), mask, mask_color_img
-            return mask, mask_color_img
+                # cv2.imshow('bbox', cv2.cvtColor(bbox_img, cv2.COLOR_BGR2RGB))
+                # cv2.imshow('pred_color_mask', cv2.cvtColor(pred_color_mask, cv2.COLOR_BGR2RGB))
+                # cv2.imshow('mask_color_img', cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB))
+                # cv2.waitKey(0)
+
+                # return np.array(label), np.array(bbox), mask, mask_color_img
+                return mask, mask_color_img
+
+            else:
+                return None, None
 
 ##################################
 ##################################

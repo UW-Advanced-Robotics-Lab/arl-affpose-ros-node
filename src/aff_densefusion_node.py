@@ -275,54 +275,54 @@ class PoseEstimator(DenseFusionEstimator):
         rospy.loginfo('Segmentation start ..')
         t_start = time.time()
         pred_mask, mask_color_img = self.AffordanceDetector.detect_bbox_and_mask(rgb)
-        t_segmentation = time.time() - t_start
-        rospy.loginfo('Segmentation Prediction time: {:.2f}s'.format(t_segmentation))
+        if pred_mask is not None:
+            t_segmentation = time.time() - t_start
+            rospy.loginfo('Segmentation Prediction time: {:.2f}s'.format(t_segmentation))
 
-        cv2_mask_color_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
-        self.pub_mask.publish(cv2_mask_color_img)
+            cv2_mask_color_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
+            self.pub_mask.publish(cv2_mask_color_img)
 
-        pred_mask_addr = self.mask_path + np.str(self.num_image) + '_pred.png'
-        cv2.imwrite(pred_mask_addr, pred_mask)
+            pred_mask_addr = self.mask_path + np.str(self.num_image) + '_pred.png'
+            cv2.imwrite(pred_mask_addr, pred_mask)
 
-        ######################
-        # DenseFusion
-        ######################
+            ######################
+            # DenseFusion
+            ######################
 
-        rospy.loginfo("")
-        rospy.loginfo('DenseFusion start ..')
-        t_start = time.time()
-        pred_R, pred_T, pred_img = DenseFusionEstimator.get_refined_pose(self, rgb, depth_16bit, pred_mask, mask_color_img)
-        t_densefusion = time.time() - t_start
-        rospy.loginfo('DenseFusion: pred T: {}'.format(pred_T))
-        rospy.loginfo('DenseFusion: pred R: {}'.format(pred_R))
-        rospy.loginfo('DenseFusion Prediction time: {:.2f}s'.format(t_densefusion))
+            rospy.loginfo("")
+            rospy.loginfo('DenseFusion start ..')
+            t_start = time.time()
+            pred_R, pred_T, pred_img = DenseFusionEstimator.get_refined_pose(self, rgb, depth_16bit, pred_mask, mask_color_img)
+            t_densefusion = time.time() - t_start
+            rospy.loginfo('DenseFusion: pred T: {}'.format(pred_T))
+            rospy.loginfo('DenseFusion: pred R: {}'.format(pred_R))
+            rospy.loginfo('DenseFusion Prediction time: {:.2f}s'.format(t_densefusion))
 
-        cv2_pred_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
-        self.pub_pred.publish(cv2_pred_img)
+            cv2_pred_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
+            self.pub_pred.publish(cv2_pred_img)
 
-        ######################
-        # RVIZ
-        ######################
+            ######################
+            # RVIZ
+            ######################
 
-        # pose
-        pose_msg = PoseStamped()
-        pose_msg.header = rgb_msg.header
-        pose_msg.pose.position.x = pred_T[0]
-        pose_msg.pose.position.y = pred_T[1]
-        pose_msg.pose.position.z = pred_T[2]
-        pose_msg.pose.orientation.x = pred_R[0]
-        pose_msg.pose.orientation.y = pred_R[1]
-        pose_msg.pose.orientation.z = pred_R[2]
-        pose_msg.pose.orientation.w = pred_R[3]
-        self.pub_pose.publish(pose_msg)
+            # pose
+            pose_msg = PoseStamped()
+            pose_msg.header = rgb_msg.header
+            pose_msg.pose.position.x = pred_T[0]
+            pose_msg.pose.position.y = pred_T[1]
+            pose_msg.pose.position.z = pred_T[2]
+            pose_msg.pose.orientation.x = pred_R[0]
+            pose_msg.pose.orientation.y = pred_R[1]
+            pose_msg.pose.orientation.z = pred_R[2]
+            pose_msg.pose.orientation.w = pred_R[3]
+            self.pub_pose.publish(pose_msg)
 
-        # # pointcloud
-        # header = std_msgs.msg.Header()
-        # header.stamp = rospy.Time.now()
-        # header.frame_id = rgb_msg.header
-        # densefusion_point_cloud = pcl2.create_cloud_xyz32(rgb_msg.header, model_points)
-        # self.pub_densefusion_model_points.publish(densefusion_point_cloud)
-
+            # # pointcloud
+            # header = std_msgs.msg.Header()
+            # header.stamp = rospy.Time.now()
+            # header.frame_id = rgb_msg.header
+            # densefusion_point_cloud = pcl2.create_cloud_xyz32(rgb_msg.header, model_points)
+            # self.pub_densefusion_model_points.publish(densefusion_point_cloud)
 
 def main(args):
 

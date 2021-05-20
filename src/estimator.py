@@ -35,7 +35,7 @@ import rospy
 ### GPU
 ##################################
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# device = torch.device("cpu")
+device = torch.device("cpu")
 
 print("\n********* Torch GPU ************")
 print("torch.__version__:", torch.__version__)
@@ -130,22 +130,24 @@ class DenseFusionEstimator():
         obj_ids = np.unique(pred_mask)[1:]
         for obj_id in obj_ids:
             if obj_id in self.class_IDs:
+
+                rospy.loginfo("*** DenseFusion detect Object Part ID: {} ***".format(obj_id))
+
+                ##################################
+                # BBOX
+                ##################################
+                # x1, y1, x2, y2 = bboxs[0], bboxs[1], bboxs[2], bboxs[3]
+                x1, y1, x2, y2 = get_obj_bbox(pred_mask, obj_id, self.height, self.width)
+
+                ##################################
+                # MASK
+                ##################################
+
+                mask_depth = ma.getmaskarray(ma.masked_not_equal(depth, 0))
+                mask_label = ma.getmaskarray(ma.masked_equal(pred_mask, obj_id))
+                mask = mask_label * mask_depth
+
                 try:
-                    rospy.loginfo("*** DenseFusion detect Object Part ID: {} ***".format(obj_id))
-
-                    ##################################
-                    # MASK
-                    ##################################
-
-                    mask_depth = ma.getmaskarray(ma.masked_not_equal(depth, 0))
-                    mask_label = ma.getmaskarray(ma.masked_equal(pred_mask, obj_id))
-                    mask = mask_label * mask_depth
-
-                    ##################################
-                    # BBOX
-                    ##################################
-                    # x1, y1, x2, y2 = bboxs[0], bboxs[1], bboxs[2], bboxs[3]
-                    x1, y1, x2, y2 = get_obj_bbox(pred_mask, obj_id, self.height, self.width)
 
                     ##################################
                     # Select Region of Interest
@@ -153,8 +155,11 @@ class DenseFusionEstimator():
 
                     choose = mask[y1:y2, x1:x2].flatten().nonzero()[0]
 
-                    # print("Zero Division: ", self.num_points, len(choose))
-                    if len(choose) >= self.num_points:
+                    print("Zero Division: ", self.num_points, len(choose))
+                    if len(choose) == 0: # TODO !!!
+                        rospy.loginfo("------ Could not detect Object Part ID: {} ------".format(obj_id))
+                        return None, None, None, None
+                    elif len(choose) >= self.num_points:
                         c_mask = np.zeros(len(choose), dtype=int)
                         c_mask[:self.num_points] = 1
                         np.random.shuffle(c_mask)
@@ -277,7 +282,7 @@ class DenseFusionEstimator():
 
                     return pred_q, pred_t, cld_img_pred
 
-                except ZeroDivisionError:
+                except ZeroDivisionError:  # ZeroDivisionError
                     rospy.loginfo("------ Could not detect Object Part ID: {} ------".format(obj_id))
                     return None, None, None, None
 
