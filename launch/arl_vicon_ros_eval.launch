@@ -1,12 +1,12 @@
 <launch>
   <arg name="rate" value="5" />
   <!-- Object Meshes -->
-  <arg name="classes" default="$(find aff_densefusion_ros)/utils/object_meshes/classes.txt" />
-  <arg name="class_ids" default="$(find aff_densefusion_ros)/utils/object_meshes/classes_ids.txt" />
+  <arg name="classes" default="$(find arl_vicon_ros)/utils/object_meshes/classes.txt" />
+  <arg name="class_ids" default="$(find arl_vicon_ros)/utils/object_meshes/classes_ids.txt" />
 
   <!-- DenseFusion -->
-  <arg name="pose_model" default="$(find aff_densefusion_ros)/utils/trained_weights/densefusion/real/pose_model_12_0.012762044926652751.pth" />
-  <arg name="refine_model" default="$(find aff_densefusion_ros)/utils/trained_weights/densefusion/real/pose_refine_model_445_0.004616367177121292.pth" />
+  <arg name="pose_model" default="$(find arl_vicon_ros)/utils/trained_weights/densefusion/real_and_syn/pose_model_current.pth" />
+  <arg name="refine_model" default="$(find arl_vicon_ros)/utils/trained_weights/densefusion/real_and_syn/pose_refine_model_current.pth" />
 
   <arg name="num_points" default='500' />
   <arg name="num_points_mesh" default='500' />
@@ -15,7 +15,7 @@
   <arg name="num_obj" default='1' />
 
   <!-- AffNet -->
-  <arg name="affnet_model" default="$(find aff_densefusion_ros)/utils/trained_weights/affnet/real/BEST_MODEL_v1_20k_images.pth" />
+  <arg name="affnet_model" default="$(find arl_vicon_ros)/utils/trained_weights/affnet/real_and_syn/BEST_MODEL.pth" />
 
   <!-- ZED Camera -->
   <arg name="rgb_image" default='/zed/zed_node/rgb/image_rect_color' />
@@ -53,14 +53,14 @@
 
   <!-- Testing -->
   <arg name="max_num_images" default="655"/>
-  <arg name="saved_image_path" default="$(find aff_densefusion_ros)/utils/images/"/>
-  <arg name="test_image_paths" default="/home/akeaveny/datasets/LabelFusion/arl_vicon_dataset/dataset_test/001_arl_lab_floor/images/"/>
+  <arg name="saved_image_path" default="$(find arl_vicon_ros)/utils/images/"/>
+  <arg name="test_image_paths" default="/data/Akeaveny/Datasets/ARLVicon/LabelFusion/test_images/001_arl_lab_floor/images/"/>
   <arg name="check_pose" default="False" />
 
   <!-- RVIZ -->
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find aff_densefusion_ros)/rviz/aff_densefusion_ros_eval.rviz" />
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find arl_vicon_ros)/rviz/arl_vicon_ros_eval.rviz" />
 
-  <node pkg="aff_densefusion_ros" type="aff_densefusion_node_eval.py" name="aff_densefusion_ros_eval" output="screen" cwd="node">
+  <node pkg="arl_vicon_ros" type="arl_vicon_node_eval.py" name="arl_vicon_ros" output="screen" cwd="node">
     <param name="rate" value="$(arg rate)" />
     <!-- Object Meshes -->
     <param name="classes" value="$(arg classes)" />

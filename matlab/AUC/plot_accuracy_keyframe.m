@@ -30,7 +30,8 @@ errors_translation_z = results_keyframe.errors_translation_z;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 hf = figure('units','normalized','outerposition',[0 0 1 1]);
 font_size = 12;
-max_distance = 0.035; % 10 cm
+max_distance = 0.1; % 10 cm
+threshold = 0.1;
 min_x_axis = 0.01; max_x_axis = 0.1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -50,7 +51,7 @@ for class_id = 1:numel(classes)
     D(D > max_distance) = inf;
     d = sort(D);
     n = numel(d);
-    c = numel(d(d < max_distance));
+    c = numel(d(d < threshold ));
     accuracy = cumsum(ones(1, n)) / n;
     AUC = VOCap(d, accuracy);
     fprintf('%20s, \tIndex:%d, \tAUC:%.2f, \tADD<2cm:%.2f,\n', char(classes(class_id)), length(index), AUC*100, (c/n)*100)
@@ -80,7 +81,7 @@ for class_id = 1:numel(classes)
     D(D > max_distance) = inf;
     d = sort(D);
     n = numel(d);
-    c = numel(d(d < max_distance));
+    c = numel(d(d < threshold ));
     accuracy = cumsum(ones(1, n)) / n;
     AUC = VOCap(d, accuracy);
     fprintf('%20s, \tIndex:%d, \tAUC:%.2f, \tADD-S<2cm:%.2f,\n', char(classes(class_id)), length(index), AUC*100, (c/n)*100)

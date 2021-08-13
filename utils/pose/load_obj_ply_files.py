@@ -18,7 +18,7 @@ from utils.dataset import vicon_dataset_utils
 
 def load_obj_ply_files(CLASSES_FILE, CLASS_IDS_FILE):
 
-    ROOT_PATH = '/home/akeaveny/catkin_ws/src/AffDenseFusionROSNode/utils/'
+    ROOT_PATH = '/home/akeaveny/catkin_ws/src/ARLViconROSNode/utils/'
 
     ###################################
     # OG PLY

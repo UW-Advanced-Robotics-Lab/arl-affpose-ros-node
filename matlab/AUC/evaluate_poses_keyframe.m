@@ -19,7 +19,7 @@ fclose(fid);
 num_objects = numel(object_names);
 models = cell(num_objects, 1);
 for i = 1:num_objects
-    filename = fullfile('/home/akeaveny/catkin_ws/src/ClassicalPoseEstimation/utils/object_meshes/mallet.xyz');
+    filename = fullfile('/home/akeaveny/catkin_ws/src/ARLViconROSNode/utils/object_meshes/models/001_mallet/densefusion/001_mallet.xyz');
     disp(filename);
     models{i} = load(filename);
 end
@@ -67,8 +67,8 @@ for i = 1:numel(keyframes)
         GT(1:3, 1:3) = quat2rotm(gt_pose(1:4));
         GT(:, 4) = gt_pose(5:7);
             
-        % pred_pose = poses.pred(:, :, j);
         pred_pose = poses.pred(:, :, j);
+%         pred_pose = poses.kf(   :, :, j);
         PRED(1:3, 1:3) = quat2rotm(pred_pose(1:4));
         PRED(:, 4) = pred_pose(5:7);
         

@@ -29,11 +29,9 @@ BACKBONE Selection:
 
 BACKBONE_FEAT_EXTRACTOR = 'resnet18'
 
-IS_PRETRAINED = True
+IS_PRETRAINED = False
 RESNET_PRETRAINED_WEIGHTS = 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth'
-MASKRCNN_PRETRAINED_WEIGHTS = '/home/robot/catkin_ws/src/AffDenseFusionROSNode/utils/trained_weights/pretrained_coco_weights.pth' # ROOT_DIR_PATH + 'pretrained_coco_weights.pth'
-
-RESTORE_TRAINED_WEIGHTS = '/home/robot/catkin_ws/src/AffDenseFusionROSNode/utils/trained_weights/BEST_MODEL.pth'
+MASKRCNN_PRETRAINED_WEIGHTS = ROOT_DIR_PATH + 'pretrained_coco_weights.pth'
 
 #######################################
 #######################################

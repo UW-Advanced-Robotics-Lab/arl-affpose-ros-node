@@ -35,8 +35,8 @@ from std_msgs.msg import String
 from vision_msgs.msg import Detection3D, Detection3DArray, ObjectHypothesisWithPose
 from visualization_msgs.msg import Marker, MarkerArray
 
-from sensor_msgs.msg import PointCloud2
 import std_msgs.msg
+from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pcl2
 
 ##################################
@@ -146,8 +146,6 @@ class PoseEstimator(DenseFusionEstimator):
         self.pub_depth = rospy.Publisher('~aff_densefusion_depth', Image, queue_size=1)
         self.pub_mask  = rospy.Publisher('~aff_densefusion_mask', Image, queue_size=1)
         self.pub_pred = rospy.Publisher('~aff_densefusion_pred', Image, queue_size=1)
-        self.pub_pose  = rospy.Publisher('~aff_densefusion_pose', PoseStamped,queue_size=1)
-        # self.pub_densefusion_model_points = rospy.Publisher('densefusion_model_points', PointCloud2, queue_size=1)
 
         ##################################
         # Testing
@@ -208,14 +206,14 @@ class PoseEstimator(DenseFusionEstimator):
         ### Load Images with ROS
         #########################
 
-        rgb_cv = self.bridge.imgmsg_to_cv2(rgb_msg, self.__rgb_encoding)
-        rgb_cv = self.bridge.cv2_to_imgmsg(rgb_cv, self.__rgb_encoding)
-        bgr = np.frombuffer(rgb_cv.data, dtype=np.uint8).reshape(rgb_cv.height, rgb_cv.width, -1)
-        rgb = np.array(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
-
-        depth_cv = self.bridge.imgmsg_to_cv2(depth_msg, self.__depth_encoding)  # "16UC1" or "32FC1"
-        depth_cv = self.bridge.cv2_to_imgmsg(depth_cv, self.__depth_encoding)
-        depth_16bit = np.frombuffer(depth_cv.data, dtype=np.uint16).reshape(rgb_cv.height, rgb_cv.width)
+        # rgb_cv = self.bridge.imgmsg_to_cv2(rgb_msg, self.__rgb_encoding)
+        # rgb_cv = self.bridge.cv2_to_imgmsg(rgb_cv, self.__rgb_encoding)
+        # bgr = np.frombuffer(rgb_cv.data, dtype=np.uint8).reshape(rgb_cv.height, rgb_cv.width, -1)
+        # rgb = np.array(cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB))
+        #
+        # depth_cv = self.bridge.imgmsg_to_cv2(depth_msg, self.__depth_encoding)  # "16UC1" or "32FC1"
+        # depth_cv = self.bridge.cv2_to_imgmsg(depth_cv, self.__depth_encoding)
+        # depth_16bit = np.frombuffer(depth_cv.data, dtype=np.uint16).reshape(rgb_cv.height, rgb_cv.width)
 
         # helper_utils.print_depth_info(depth_16bit)
         # depth_8bit = helper_utils.convert_16_bit_depth_to_8_bit(depth_16bit)
@@ -225,13 +223,13 @@ class PoseEstimator(DenseFusionEstimator):
         ### Test images
         #########################
 
-        # num_str = np.str(10000000000 + self.num_image)[1:]
-        # rgb_addr = self.test_image_paths + num_str + '_rgb.png'
-        # rgb = PILImage.open(rgb_addr).convert('RGB')
-        # rgb = np.array(rgb, dtype=np.uint8)
-        #
-        # depth_addr = self.test_image_paths + num_str + '_depth.png'
-        # depth_16bit = cv2.imread(depth_addr, -1)
+        num_str = np.str(10000000000 + self.num_image)[1:]
+        rgb_addr = self.test_image_paths + num_str + '_rgb.png'
+        rgb = PILImage.open(rgb_addr).convert('RGB')
+        rgb = np.array(rgb, dtype=np.uint8)
+
+        depth_addr = self.test_image_paths + num_str + '_depth.png'
+        depth_16bit = cv2.imread(depth_addr, -1)
 
         ##################################
         # RESIZE & CROP
@@ -272,57 +270,36 @@ class PoseEstimator(DenseFusionEstimator):
         ######################
 
         rospy.loginfo("\n")
+        rospy.loginfo("")
         rospy.loginfo('Segmentation start ..')
         t_start = time.time()
-        pred_mask, mask_color_img = self.AffordanceDetector.detect_bbox_and_mask(rgb)
-        if pred_mask is not None:
-            t_segmentation = time.time() - t_start
-            rospy.loginfo('Segmentation Prediction time: {:.2f}s'.format(t_segmentation))
+        pred_mask, pred_colour_mask = self.AffordanceDetector.detect_bbox_and_mask(rgb)
+        if pred_mask is None:
+            return
+        t_segmentation = time.time() - t_start
+        rospy.loginfo('Segmentation Prediction time: {:.2f}s'.format(t_segmentation))
 
-            cv2_mask_color_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
-            self.pub_mask.publish(cv2_mask_color_img)
+        cv2_pred_colour_mask = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_colour_mask, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
+        self.pub_mask.publish(cv2_pred_colour_mask)
 
-            pred_mask_addr = self.mask_path + np.str(self.num_image) + '_pred.png'
-            cv2.imwrite(pred_mask_addr, pred_mask)
+        pred_mask_addr = self.mask_path + np.str(self.num_image) + '_pred.png'
+        cv2.imwrite(pred_mask_addr, pred_mask)
 
-            ######################
-            # DenseFusion
-            ######################
+        ######################
+        # DenseFusion
+        ######################
 
-            rospy.loginfo("")
-            rospy.loginfo('DenseFusion start ..')
-            t_start = time.time()
-            pred_R, pred_T, pred_img = DenseFusionEstimator.get_refined_pose(self, rgb, depth_16bit, pred_mask, mask_color_img)
-            t_densefusion = time.time() - t_start
-            rospy.loginfo('DenseFusion: pred T: {}'.format(pred_T))
-            rospy.loginfo('DenseFusion: pred R: {}'.format(pred_R))
-            rospy.loginfo('DenseFusion Prediction time: {:.2f}s'.format(t_densefusion))
+        rospy.loginfo("")
+        rospy.loginfo('DenseFusion start ..')
+        t_start = time.time()
+        pred_img = DenseFusionEstimator.get_6dof_pose(self, rgb, depth_16bit, pred_mask, pred_colour_mask)
+        if pred_img is None:
+            return
+        t_densefusion = time.time() - t_start
+        rospy.loginfo('DenseFusion Prediction time: {:.2f}s'.format(t_densefusion))
 
-            cv2_pred_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
-            self.pub_pred.publish(cv2_pred_img)
-
-            ######################
-            # RVIZ
-            ######################
-
-            # pose
-            pose_msg = PoseStamped()
-            pose_msg.header = rgb_msg.header
-            pose_msg.pose.position.x = pred_T[0]
-            pose_msg.pose.position.y = pred_T[1]
-            pose_msg.pose.position.z = pred_T[2]
-            pose_msg.pose.orientation.x = pred_R[0]
-            pose_msg.pose.orientation.y = pred_R[1]
-            pose_msg.pose.orientation.z = pred_R[2]
-            pose_msg.pose.orientation.w = pred_R[3]
-            self.pub_pose.publish(pose_msg)
-
-            # # pointcloud
-            # header = std_msgs.msg.Header()
-            # header.stamp = rospy.Time.now()
-            # header.frame_id = rgb_msg.header
-            # densefusion_point_cloud = pcl2.create_cloud_xyz32(rgb_msg.header, model_points)
-            # self.pub_densefusion_model_points.publish(densefusion_point_cloud)
+        cv2_pred_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
+        self.pub_pred.publish(cv2_pred_img)
 
 def main(args):
 

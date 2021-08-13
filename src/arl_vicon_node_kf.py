@@ -35,8 +35,8 @@ from std_msgs.msg import String
 from vision_msgs.msg import Detection3D, Detection3DArray, ObjectHypothesisWithPose
 from visualization_msgs.msg import Marker, MarkerArray
 
-from sensor_msgs.msg import PointCloud2
 import std_msgs.msg
+from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pcl2
 
 ##################################
@@ -146,8 +146,6 @@ class PoseEstimator(DenseFusionEstimator):
         self.pub_depth = rospy.Publisher('~aff_densefusion_depth', Image, queue_size=1)
         self.pub_mask  = rospy.Publisher('~aff_densefusion_mask', Image, queue_size=1)
         self.pub_pred = rospy.Publisher('~aff_densefusion_pred', Image, queue_size=1)
-        self.pub_pose  = rospy.Publisher('~aff_densefusion_pose', PoseStamped,queue_size=1)
-        # self.pub_densefusion_model_points = rospy.Publisher('densefusion_model_points', PointCloud2, queue_size=1)
 
         ##################################
         # Testing
@@ -196,6 +194,7 @@ class PoseEstimator(DenseFusionEstimator):
 
     ######################
     ######################
+
     def camera_callback(self, rgb_msg, depth_msg):
 
         if self.num_image < self.max_num_images:
@@ -216,10 +215,10 @@ class PoseEstimator(DenseFusionEstimator):
         # depth_cv = self.bridge.imgmsg_to_cv2(depth_msg, self.__depth_encoding)  # "16UC1" or "32FC1"
         # depth_cv = self.bridge.cv2_to_imgmsg(depth_cv, self.__depth_encoding)
         # depth_16bit = np.frombuffer(depth_cv.data, dtype=np.uint16).reshape(rgb_cv.height, rgb_cv.width)
-        #
-        # # helper_utils.print_depth_info(depth_16bit)
+
+        # helper_utils.print_depth_info(depth_16bit)
         # depth_8bit = helper_utils.convert_16_bit_depth_to_8_bit(depth_16bit)
-        # # helper_utils.print_depth_info(depth_8bit)
+        # helper_utils.print_depth_info(depth_8bit)
 
         #########################
         ### Test images
@@ -233,41 +232,29 @@ class PoseEstimator(DenseFusionEstimator):
         depth_addr = self.test_image_paths + num_str + '_depth.png'
         depth_16bit = cv2.imread(depth_addr, -1)
 
+        #########################
+        ### gt
+        #########################
+
+        meta_addr = self.test_image_paths + num_str + "_meta.mat"
+        gt_meta = scio.loadmat(meta_addr)
+
         mask_addr = self.test_image_paths + num_str + '_labels.png'
-        mask = cv2.imread(mask_addr, -1)
+        gt_mask = cv2.imread(mask_addr, -1)
 
         ##################################
         # RESIZE & CROP
         ##################################
 
+        # RESIZE & CROP
         rgb = cv2.resize(rgb, self.__resize, interpolation=cv2.INTER_CUBIC)
         rgb = helper_utils.crop(pil_img=rgb, crop_size=self.__crop_size, is_img=True)
 
         depth_16bit = cv2.resize(depth_16bit, self.__resize, interpolation=cv2.INTER_CUBIC)
         depth_16bit = helper_utils.crop(pil_img=depth_16bit, crop_size=self.__crop_size)
 
-        gt_mask = cv2.resize(mask, self.__resize, interpolation=cv2.INTER_NEAREST)
+        gt_mask = cv2.resize(gt_mask, self.__resize, interpolation=cv2.INTER_NEAREST)
         gt_mask = helper_utils.crop(pil_img=gt_mask, crop_size=self.__crop_size)
-
-        #########################
-        ### GT POSE
-        #########################
-
-        meta_addr = self.test_image_paths + num_str + "_meta.mat"
-        meta = scio.loadmat(meta_addr)
-
-        obj_id = 1
-        obj_meta_idx = str(1000 + obj_id)[1:]
-        gt_r = np.array(meta['obj_rotation_' + np.str(obj_meta_idx)]).reshape(3, 3)
-        gt_t = np.array(meta['obj_translation_' + np.str(obj_meta_idx)]).reshape(-1)
-        qt_quat = R.from_dcm(gt_r).as_quat()
-
-        camera_r = meta['cam_rotation']
-        camera_t = meta['cam_translation']
-
-        gt_world_r, gt_world_t = helper_utils.get_pose_in_world_frame(object_r=gt_r, object_t=gt_t, camera_r=camera_r,camera_t=camera_t)
-        gt_object_pose_quaternion = helper_utils.convert_R_and_T_matrix_to_object_pose_quaternion(R=gt_world_r,T=gt_world_t)
-        gt_object_pose_vector = helper_utils.convert_object_pose_quaternion_to_object_pose_vector(gt_object_pose_quaternion)
 
         ##################################
         # blur value
@@ -276,7 +263,7 @@ class PoseEstimator(DenseFusionEstimator):
             return
 
         ##################################
-        # PUBLISH
+        # RVIZ
         ##################################
 
         cv2_rgb = self.bridge.cv2_to_imgmsg(cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR), self.__rgb_encoding)
@@ -296,15 +283,18 @@ class PoseEstimator(DenseFusionEstimator):
         # Segmentation
         ######################
 
+        rospy.loginfo("\n")
         rospy.loginfo("")
         rospy.loginfo('Segmentation start ..')
         t_start = time.time()
-        pred_mask, mask_color_img = self.AffordanceDetector.detect_bbox_and_mask(rgb)
+        pred_mask, pred_colour_mask = self.AffordanceDetector.detect_bbox_and_mask(rgb)
+        if pred_mask is None:
+            return
         t_segmentation = time.time() - t_start
-        rospy.loginfo('Segmentation Prediction time: {:.2f}s\n'.format(t_segmentation))
+        rospy.loginfo('Segmentation Prediction time: {:.2f}s'.format(t_segmentation))
 
-        cv2_mask_color_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(mask_color_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
-        self.pub_mask.publish(cv2_mask_color_img)
+        cv2_pred_colour_mask = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_colour_mask, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
+        self.pub_mask.publish(cv2_pred_colour_mask)
 
         # SAVE
         gt_mask_addr = self.mask_path + np.str(self.num_image) + '_gt.png'
@@ -320,69 +310,16 @@ class PoseEstimator(DenseFusionEstimator):
         rospy.loginfo("")
         rospy.loginfo('DenseFusion start ..')
         t_start = time.time()
-        pred_R, pred_T, pred_img = DenseFusionEstimator.get_refined_pose_gt(self, rgb, depth_16bit, pred_mask, mask_color_img, gt_mask, gt_r, gt_t)
+        pred_img = DenseFusionEstimator.get_6dof_pose_kf(self, rgb, depth_16bit, pred_mask, pred_colour_mask)
+        # pred_img = DenseFusionEstimator.get_6dof_pose_kf(self, rgb, depth_16bit, pred_mask, pred_colour_mask,
+        #                                                  gt_meta, self.pose_path, self.num_image)
+        if pred_img is None:
+            return
         t_densefusion = time.time() - t_start
         rospy.loginfo('DenseFusion Prediction time: {:.2f}s'.format(t_densefusion))
 
         cv2_pred_img = self.bridge.cv2_to_imgmsg(cv2.cvtColor(pred_img, cv2.COLOR_BGR2RGB), self.__rgb_encoding)
         self.pub_pred.publish(cv2_pred_img)
-
-        ######################
-        # TODO: MATLAB
-        ######################
-
-        world_r, world_t = helper_utils.get_pose_in_world_frame(object_r=pred_R, object_t=pred_T, camera_r=camera_r, camera_t=camera_t)
-        pred_object_pose_quaternion = helper_utils.convert_R_and_T_matrix_to_object_pose_quaternion(R=world_r,  T=world_t)
-
-        helper_utils.quantify_errors(gt_r=gt_world_r, gt_t=gt_world_t,
-                                     pred_r=world_r, pred_t=world_t,
-                                     pose_method='DenseFusion')
-
-        # rospy.loginfo("")
-        # rospy.loginfo("GT: {}".format(gt_object_pose_quaternion))
-        # rospy.loginfo("Pred: {}".format(pred_object_pose_quaternion))
-
-        scio.savemat('{0}/{1}.mat'.format(self.pose_path, '%04d' % self.num_image),
-                     {"class_ids": [obj_id],
-                      'gt': gt_object_pose_quaternion,
-                      'pred': pred_object_pose_quaternion
-                      })
-
-        ######################
-        # RVIZ
-        ######################
-
-        # gt
-        # pose_msg = PoseStamped()
-        # pose_msg.header = rgb_msg.header
-        # pose_msg.pose.position.x = gt_t[0]
-        # pose_msg.pose.position.y = gt_t[1]
-        # pose_msg.pose.position.z = gt_t[2]
-        # pose_msg.pose.orientation.x = qt_quat[0]
-        # pose_msg.pose.orientation.y = qt_quat[1]
-        # pose_msg.pose.orientation.z = qt_quat[2]
-        # pose_msg.pose.orientation.w = qt_quat[3]
-        # self.pub_pose.publish(pose_msg)
-
-        # pose
-        # pose_msg = PoseStamped()
-        # pose_msg.header = rgb_msg.header
-        # pose_msg.pose.position.x = pred_T[0]
-        # pose_msg.pose.position.y = pred_T[1]
-        # pose_msg.pose.position.z = pred_T[2]
-        # pose_msg.pose.orientation.x = pred_R[0]
-        # pose_msg.pose.orientation.y = pred_R[1]
-        # pose_msg.pose.orientation.z = pred_R[2]
-        # pose_msg.pose.orientation.w = pred_R[3]
-        # self.pub_pose.publish(pose_msg)
-        #
-        # # pointcloud
-        # header = std_msgs.msg.Header()
-        # header.stamp = rospy.Time.now()
-        # header.frame_id = rgb_msg.header
-        # densefusion_point_cloud = pcl2.create_cloud_xyz32(rgb_msg.header, model_points)
-        #
-        # self.pub_densefusion_model_points.publish(densefusion_point_cloud)
 
 def main(args):
 
@@ -400,9 +337,6 @@ def main(args):
         rospy.spin()
         if rate > 0.:
             rate.sleep()
-    # except KeyboardInterrupt:
-    #     print ('Shutting down ROS pose estimation module')
-    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main(sys.argv)

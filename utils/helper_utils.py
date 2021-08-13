@@ -233,10 +233,9 @@ def quantify_errors(gt_r, gt_t, pred_r, pred_t, pose_method='PnP'):
     error = np.arccos(error_cos)
     pred_R_error = 180.0 * error / np.pi
 
-    rospy.loginfo("")
-    rospy.loginfo("Quantifying Errors for {}".format(pose_method))
-    rospy.loginfo("T: {:.2f} [cm], X:{:.2f} [cm], Y:{:.2f} [cm], Z:{:.2f} [cm]".format(pred_T_error*100, pred_T_error_x*100, pred_T_error_y*100, pred_T_error_z*100))
-    rospy.loginfo("Rot: {:.2f} [deg]".format(pred_R_error))
+    rospy.loginfo("*** Quantifying Errors for: {} ***".format(pose_method))
+    rospy.loginfo("translation [cm] : {:.2f}".format(pred_T_error*100))
+    rospy.loginfo("rotation    [deg]: {:.2f}".format(pred_R_error))
 
 ######################
 # DenseFusion UTILS
@@ -270,15 +269,26 @@ def put_position_orientation_value_to_frame(rgb, R, T):
     # convert translation to [cm]
     T *= 100
 
-    cv2.putText(pose_img, 'orientation(degree)', (10, 60), font, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
+    cv2.putText(pose_img, 'orientation [degree]', (10, 60), font, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
     cv2.putText(pose_img, 'x:' + str(round(R[0], 2)), (250, 60), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(pose_img, 'y:' + str(round(R[1], 2)), (350, 60), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(pose_img, 'z:' + str(round(R[2], 2)), (450, 60), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
 
-    cv2.putText(pose_img, 'position(cm)', (10, 30), font, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
+    cv2.putText(pose_img, 'position [cm]', (10, 30), font, 0.7, (0, 255, 0), 1, cv2.LINE_AA)
     cv2.putText(pose_img, 'x:' + str(round(T[0], 2)), (250, 30), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(pose_img, 'y:' + str(round(T[1], 2)), (350, 30), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.putText(pose_img, 'z:' + str(round(T[2], 2)), (450, 30), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
 
     return pose_img
 
+def print_object_pose(t, R, source='pred'):
+
+    # convert translation to [cm]
+    t = t.copy() * 100
+
+    rvec, _ = cv2.Rodrigues(R)
+    rvec = rvec * 180 / np.pi
+    rvec = np.squeeze(np.array(rvec)).reshape(-1)
+
+    rospy.loginfo('{}: position    [cm]:  x:{:.2f}, y:{:.2f}, z:{:.2f}'.format(source, t[0], t[1], t[2]))
+    rospy.loginfo('{}: orientation [deg]: x:{:.2f}, y:{:.2f}, z:{:.2f}'.format(source, rvec[0], rvec[1], rvec[2]))

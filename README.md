@@ -13,5 +13,5 @@
 
 ## Launch File
    ```
-   $ roslaunch aff_densefusion_ros aff_densefusion_ros.launch
+   $ roslaunch arl_vicon_ros arl_vicon_ros.launch
    ```

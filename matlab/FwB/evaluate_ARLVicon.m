@@ -1,4 +1,6 @@
-function  AVE_F_wb = evaluate_UMD(path)
+function  AVE_F_wb = evaluate_ARLVicon
+
+path = '/home/akeaveny/catkin_ws/src/ARLViconROSNode/utils/images/mask';
 
 % affordances index
 aff_start=0+1;   % ignore {background} label
