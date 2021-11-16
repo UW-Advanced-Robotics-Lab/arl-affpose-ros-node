@@ -7,7 +7,7 @@ I used arl-affpose-ros-node with the following repos:
 3. [arl-affpose-dataset-utils](https://github.com/UW-Advanced-Robotics-Lab/arl-affpose-dataset-utils) a custom dataset that I generated.
 4. [pytorch-simple-affnet](https://github.com/UW-Advanced-Robotics-Lab/pytorch-simple-affnet) for predicting an object affordance labels.
 5. [densefusion](https://github.com/UW-Advanced-Robotics-Lab) for predicting an object 6-DoF pose.
-6. [barrett_tf_publisher](https://github.com/UW-Advanced-Robotics-Lab/barrett-wam-arm) for robotic grasping experiments. Specifically barrett_tf_publisher and barrett_trac_ik. 
+6. [barrett-wam-arm](https://github.com/UW-Advanced-Robotics-Lab/barrett-wam-arm) for robotic grasping experiments. Specifically barrett_tf_publisher and barrett_trac_ik. 
 
 ### ROS Architecture
 Here is an overview of our Architecture.
